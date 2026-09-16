@@ -3,12 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo List</title>
+    <title>Ma Todo List</title>
+    <style>
+        /* Centrer tout le contenu sur la page */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Le grand rectangle principal */
+        .container {
+            background-color: white;
+            width: 400px;
+            padding: 20px;
+            border-radius: 8px; /* Légèrement arrondi pour faire propre */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+        }
+
+        /* La zone de la liste */
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+            max-height: 300px;
+            overflow-y: auto; /* Permet de scroller s'il y a trop de tâches */
+        }
+
+        /* Les cartes rectangulaires pour chaque tâche */
+        .task-card {
+            background-color: #e9ecef;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* La zone en bas avec le champ texte et le bouton */
+        .input-section {
+            display: flex;
+            gap: 10px; /* Espace entre le champ et le bouton */
+        }
+
+        input[type="text"] {
+            flex-grow: 1; /* Le champ texte prend toute la place disponible */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Todo List</h1>
-    
-    <ul id="todo-list"></ul>
+
+    <div class="container">
+        <h1>Ma Todo List</h1>
+        
+        <ul id="todo-list"></ul>
+
+        <div class="input-section">
+            <input type="text" id="task-input" placeholder="Nouvelle tâche...">
+            <button id="add-btn">Ajouter</button>
+        </div>
+    </div>
 
     <script src="app.js"></script>
 </body>
