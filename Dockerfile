@@ -1,9 +1,9 @@
-FROM node:20-alpine
+FROM nginx:alpine
 
-WORKDIR /app
+# Copier les fichiers statiques dans le dossier web par défaut de Nginx
+COPY index.html /usr/share/nginx/html/
+COPY app.js /usr/share/nginx/html/
 
-COPY . .
+EXPOSE 80
 
-EXPOSE 3000
-
-CMD ["node", "app.js"]
+CMD ["nginx", "-g", "daemon off;"]
