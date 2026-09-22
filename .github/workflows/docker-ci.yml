@@ -7,7 +7,6 @@ on:
 jobs:
   
   # 1. CI : Tests de qualité de code
-
   lint-and-test:
     runs-on: ubuntu-latest
     steps:
@@ -24,7 +23,6 @@ jobs:
 
 
   # 2. BUILD & PUSH (Exécuté SEULEMENT si la CI passe)
-
   build-and-push:
     needs: lint-and-test
     runs-on: ubuntu-latest
@@ -60,7 +58,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           
-# --- AJOUT SÉCURITÉ (DEVSECOPS) 
       - name: Scan de vulnérabilités Docker (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
@@ -69,14 +66,14 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
 
-  # 3. CD : DÉPLOIEMENT SUR VPS & VÉRIFICATION
 
+  # 3. CD : DÉPLOIEMENT SUR VPS & VÉRIFICATION
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
-      - name: Connexion SSH et déploiement sur le VPS
+      - name: Connexion SSH, deploiement et rollback
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -84,11 +81,26 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            # backup de la version qui tourne
+            docker tag ghcr.io/stefmih/projet1b3devops:latest ghcr.io/stefmih/projet1b3devops:backup || true
+
+            # maj et demarrage du nouveau conteneur
             docker pull ghcr.io/stefmih/projet1b3devops:latest
             docker stop mon-site || true
             docker rm mon-site || true
             docker run -d --name mon-site --restart always -p 20000:80 ghcr.io/stefmih/projet1b3devops:latest
-            docker image prune -f
+
+            # check du conteneur, rollback si erreur
+            sleep 4
+            if curl -f http://127.0.0.1:20000 > /dev/null 2>&1; then
+              docker image prune -f
+            else
+              echo "Erreur au lancement, rollback vers l'image de backup..."
+              docker stop mon-site || true
+              docker rm mon-site || true
+              docker run -d --name mon-site --restart always -p 20000:80 ghcr.io/stefmih/projet1b3devops:backup
+              exit 1
+            fi
 
       - name: Smoke Test (Vérification live du site)
         run: |
