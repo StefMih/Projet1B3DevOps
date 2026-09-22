@@ -38,3 +38,26 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Connexion SSH et déploiement sur le VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_PORT }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # 1. Télécharger la dernière image Nginx construite par le job précédent
+            docker pull ghcr.io/stefmih/projet1b3devops:latest
+
+            # 2. Supprimer l'ancien conteneur s'il tourne déjà
+            docker stop mon-site || true
+            docker rm mon-site || true
+
+            # 3. Lancer le conteneur en arrière-plan sur le port 80 du serveur
+            docker run -d --name mon-site --restart always -p 80:80 ghcr.io/stefmih/projet1b3devops:latest
