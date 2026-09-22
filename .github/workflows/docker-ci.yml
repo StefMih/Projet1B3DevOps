@@ -1,11 +1,32 @@
-name: Build and Push Docker Image
+name: Build, Test and Deploy
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
+  
+  # 1. CI : Tests de qualité de code
+
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Vérifier la syntaxe HTML
+        run: npx htmlhint index.html
+
+
+  # 2. BUILD & PUSH (Exécuté SEULEMENT si la CI passe)
+
   build-and-push:
+    needs: lint-and-test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,6 +60,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+
+  # 3. CD : DÉPLOIEMENT SUR VPS & VÉRIFICATION
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -56,3 +80,9 @@ jobs:
             docker stop mon-site || true
             docker rm mon-site || true
             docker run -d --name mon-site --restart always -p 20000:80 ghcr.io/stefmih/projet1b3devops:latest
+            docker image prune -f
+
+      - name: Smoke Test (Vérification live du site)
+        run: |
+          sleep 5
+          curl -I --fail https://devops.pokeban.org
