@@ -60,4 +60,5 @@ jobs:
             docker rm mon-site || true
 
             # 3. Lancer le conteneur en arrière-plan sur le port 80 du serveur
-            docker run -d --name mon-site --restart always -p 80:80 ghcr.io/stefmih/projet1b3devops:latest
+            # 3. Lancer le conteneur sur le port 20000
+        docker run -d --name mon-site --restart always -p 20000:80 ghcr.io/stefmih/projet1b3devops:latest
