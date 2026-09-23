@@ -1,48 +1,45 @@
 # Projet 1 B3 DevOps
 
-[![Build, Test and Deploy](https://github.com/StefMih/Projet1B3DevOps/actions/workflows/docker-ci.yml/badge.svg)](https://github.com/StefMih/Projet1B3DevOps/actions/workflows/docker-ci.yml)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/infinite-loop.gif" alt="DevOps Infinity Loop" width="480"/>
+</p>
 
-Pipeline CI/CD complet automatisé avec GitHub Actions, conteneurisation Docker, analyse de vulnérabilités et déploiement continu sur VPS avec rollback automatique.
+<p align="center">
+  Pipeline CI/CD complet automatise avec GitHub Actions, conteneurisation Docker, Trivy et deploiement sur VPS avec rollback automatique.
+</p>
 
 ---
 
-## 🔄 Cycle DevOps (CI/CD Pipeline)
+## Statut du pipeline
+
+| Composant | Description | Statut |
+| :--- | :--- | :--- |
+| Pipeline Global | Workflow complet (CI/CD) | [![Build, Test and Deploy](https://github.com/StefMih/Projet1B3DevOps/actions/workflows/docker-ci.yml/badge.svg)](https://github.com/StefMih/Projet1B3DevOps/actions/workflows/docker-ci.yml) |
+| Linter | Validation syntaxique du code web | HTMLHint |
+| Securite | Audit des vulnerabilites de l'image | Trivy |
+| Registre | Stockage de l'image Docker | GitHub Packages (ghcr.io) |
+| Rollback | Restauration automatique sur incident | Image locale :backup |
+| Environnement | Serveur de production | Port 20000 |
+
+---
+
+## Flux d'execution du pipeline
 
 ```mermaid
-flowchart LR
-    %% Styles
-    classDef dev fill:#238636,stroke:#2ea043,stroke-width:2px,color:#fff;
-    classDef center fill:#1f6feb,stroke:#388bfd,stroke-width:2px,color:#fff;
-    classDef ops fill:#8957e5,stroke:#a371f7,stroke-width:2px,color:#fff;
-    classDef alert fill:#da3633,stroke:#f85149,stroke-width:2px,color:#fff;
-
-    %% Boucle DEV (CI)
-    subgraph CI ["Boucle CI (GitHub Actions)"]
-        A[Code Git] --> B[Lint HTMLHint]
-        B --> C[Build Docker]
-        C --> D[Sec Scan Trivy]
+flowchart TD
+    subgraph CI [Integration Continue]
+        A[Git Push] --> B[Verification HTMLHint]
+        B --> C[Construction image Docker]
+        C --> D[Audit vulnerabilites Trivy]
+        D --> E[Publication vers ghcr.io]
     end
 
-    %% Carrefour central
-    D --> E((Push GHCR))
-
-    %% Boucle OPS (CD & Run)
-    subgraph CD ["Boucle CD (VPS & Monitoring)"]
-        E --> F[SSH Deploy VPS]
-        F --> G[Tag Backup & Run]
-        G --> H{Smoke Test curl}
-        H -- Succès --> I[Production en ligne]
-        H -- Échec --> J[Rollback Automatique]
-        J --> I
-        I --> K[Monitoring Uptime]
+    subgraph CD [Deploiement Continu]
+        E --> F[Connexion SSH et telechargement de l'image]
+        F --> G[Tag de l'ancienne version en :backup]
+        G --> H[Demarrage du conteneur :latest]
+        H --> I{Smoke Test curl}
+        I -- Succes --> J[Production active]
+        I -- Echec --> K[Rollback vers :backup]
+        K --> J
     end
-
-    %% Rebouclage vers le code
-    K -. Feedback & Correctifs .-> A
-    J -. Alerte incident .-> A
-
-    %% Assignation des styles
-    class A,B,C,D dev;
-    class E center;
-    class F,G,H,I,K ops;
-    class J alert;
