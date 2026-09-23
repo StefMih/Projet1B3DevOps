@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM nginx:stable
 
 # Copier les fichiers statiques dans le dossier web par défaut de Nginx
 COPY index.html /usr/share/nginx/html/
