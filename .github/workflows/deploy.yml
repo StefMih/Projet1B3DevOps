@@ -1,0 +1,47 @@
+name: "CI/CD : Test Source & Déploiement Terraform"
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # 1. CI : Tests de qualité du code source
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Adapté pour cibler le nouveau dossier src/
+      - name: Vérifier la syntaxe HTML
+        run: npx htmlhint src/index.html
+
+  # 2. CD : Déploiement de l'Infrastructure AWS
+  deploy-infra:
+    needs: lint-and-test # Ne se lance que si le code HTML est valide
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./infra # Terraform s'exécute uniquement dans son dossier
+        
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installation de Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Initialisation (Init)
+        run: terraform init
+
+      - name: Déploiement automatique (Apply)
+        run: terraform apply -auto-approve -input=false
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
