@@ -48,27 +48,48 @@ jobs:
 
     
       
-      - name: Transfert des fichiers web vers AWS (SCP)
+      # --- DÉPLOIEMENT SUR LE SERVEUR 1 (VPS1) ---
+      - name: Transfert des fichiers vers VPS 1 (SCP)
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: admin # À adapter selon l'OS de ton VPS AWS (ex: 'debian', 'ubuntu' ou 'admin')
+          host: ${{ secrets.VPS1_HOST }}
+          username: admin 
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "src/*"
           target: "/tmp/web_files"
-          strip_components: 1 # Retire le dossier parent "src/" lors de la copie
+          strip_components: 1
 
-      - name: Installation dans Nginx (SSH)
+      - name: Installation Nginx VPS 1 (SSH)
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: admin # Même utilisateur qu'au-dessus
+          host: ${{ secrets.VPS1_HOST }}
+          username: admin
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            # Déplacement des fichiers vers le dossier Nginx avec les droits admin
             sudo mkdir -p /var/www/html
             sudo cp -r /tmp/web_files/* /var/www/html/
-            
-            # Nettoyage et redémarrage
+            sudo rm -rf /tmp/web_files
+            sudo systemctl reload nginx
+
+      # --- DÉPLOIEMENT SUR LE SERVEUR 2 (VPS2) ---
+      - name: Transfert des fichiers vers VPS 2 (SCP)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS2_HOST }}
+          username: admin
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "src/*"
+          target: "/tmp/web_files"
+          strip_components: 1
+
+      - name: Installation Nginx VPS 2 (SSH)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS2_HOST }}
+          username: admin
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            sudo mkdir -p /var/www/html
+            sudo cp -r /tmp/web_files/* /var/www/html/
             sudo rm -rf /tmp/web_files
             sudo systemctl reload nginx
